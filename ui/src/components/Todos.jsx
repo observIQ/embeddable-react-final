@@ -3,6 +3,7 @@ import { useCallback } from "react";
 import { useEffect } from "react";
 import { NewTodoInput } from "./NewTodoForm";
 import { Todo } from "./Todo";
+import { Link } from "react-router-dom";
 
 export const Todos = () => {
   const [todos, setTodos] = useState([]);
@@ -36,6 +37,9 @@ export const Todos = () => {
         ))}
       </div>
       <NewTodoInput onCreateSuccess={onCreateSuccess} />
+      <Link to="/about" className="nav-link">
+        Learn more...
+      </Link>
     </>
   );
 };

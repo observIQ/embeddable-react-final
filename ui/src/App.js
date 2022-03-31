@@ -1,10 +1,29 @@
 import { Todos } from "./components/Todos";
+import { About } from "./components/About";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 function App() {
   return (
-    <div className="container">
-      <Todos />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <div className="container">
+              <Todos />
+            </div>
+          }
+        />
+        <Route
+          path="/about"
+          element={
+            <div className="container">
+              <About />
+            </div>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

@@ -76,3 +76,7 @@ body {
 .input-box {
   display: flex;
 }
+
+.nav-link {
+  float: right;
+}

@@ -1,0 +1,78 @@
+body {
+  background-color: #c3c9d4;
+  font-family: "Poppins", sans-serif;
+}
+
+.container {
+  border: 1px solid darkgray;
+  background-color: #fff;
+
+  margin: auto;
+  padding: 1.5rem;
+
+  max-width: 600px;
+  min-height: 80vh;
+}
+
+.plus {
+  margin-left: auto;
+}
+
+.todo {
+  display: flex;
+  align-items: center;
+
+  width: 100%;
+}
+
+.delete {
+  margin-left: auto;
+
+  border: none;
+  border-radius: 5px;
+  background: none;
+}
+
+.delete:hover {
+  background-color: #c3c9d4;
+  cursor: pointer;
+}
+
+.checkbox {
+  width: 20px;
+  height: 20px;
+  margin-right: 1.5rem;
+}
+
+.todo-input {
+  flex-grow: 1;
+  border: none;
+  border-bottom: 1px solid #c3c9d4;
+}
+
+.todo-input:focus {
+  outline: none;
+}
+
+.save-button {
+  margin-left: 1.5rem;
+}
+
+.new-button {
+  margin: auto;
+  color: rgb(127, 185, 127);
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  font-weight: 600;
+  border: 1px solid rgb(127, 185, 127);
+}
+
+.button-box {
+  display: flex;
+}
+
+.input-box {
+  display: flex;
+}

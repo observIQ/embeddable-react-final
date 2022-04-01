@@ -1,14 +1,14 @@
 # Embed React in Golang
 
-In this article we'll learn how to embed a React single page application (SPA) in our Go backend. If you're anxious to look at code you can get started with our implementation [here](#todo) or view the final source code in the [embeddable-react-final](#todo).
+In this article we'll learn how to embed a React single page application (SPA) in our Go backend. If you're itching to look at code you can get started with our implementation [here](#getting-started) or view the final source code in the [embeddable-react-final](https://github.com/observIQ/embeddable-react-final).
 
 In the meantime its worth discussing the problem that we're here to solve and why this is a great solution for certain use cases.
 
 ## The Problem
 
-Imagine this: you've built an application and API in Go, maybe in use by a command line client or just managed by REST calls. One day your project manager emerges from playing Elden Ring long enough to inform you that your customers demand a graphical user interface.
+Imagine this: you've built an application and API in Go, maybe in use by a command line client or with REST. One day your project manager emerges from playing Elden Ring long enough to inform you that your customers demand a graphical user interface.
 
-OK - no big deal you can write a simple React App to use your API... except your simple Web API which previously was deployed with a single binary now needs some dependencies. Some current React frameworks like NextJS or Gatsby are well supported but might be overkill and aren't as flexible as you might need.
+OK - no big deal you can write a simple React App to use your API... except your simple Web API which previously was deployed with a single binary now needs some dependencies. Some current React frameworks like NextJS or Gatsby are well supported but might be overkill and not as flexible as you might like.
 
 Typically you might deploy a front end application like this.
 
@@ -16,11 +16,11 @@ Typically you might deploy a front end application like this.
 
 Where the browser is sending requests directly to end points on the same host. This middle-man server then forwards these requests onto the backend API where all of the logic is handled, and in turn sends that response back to the browser.
 
-There could be some reasons why this is advantageous (TODO)
+Maybe this is what you want. You might want to obfuscate your backend from the rest of the internet. In the case though that your API is already exposed there is a very elegant and simple solution, that avoids Node dependencies and running multiple services.
 
-TODO: finish this
+## Prerequisites (TODO)
 
-## Let's Get Started
+## Getting started
 
 So lets start off with a basic Go API and React App.
 
@@ -28,7 +28,7 @@ So lets start off with a basic Go API and React App.
 git clone https://github.com/observIQ/embeddable-react.git
 ```
 
-Here we have a basic application to manage To Do lists, essentially the cornerstone of modern web development.
+Here we have or "To Do" application. A cornerstone of web development tutorials and this article will be no different.
 
 Without getting into too much detail we have a REST API which is implemented in `api/` and a React app in `ui/`.
 
@@ -74,7 +74,11 @@ And sure enough our API got some hits:
 
 ```
 
-You might be asking "How did this even work?". Good question! Answer: Magic. Well... at least `create-react-app` magic.
+You might be asking _"How did this even work?"_. Good question!
+
+Answer: Magic.
+
+Well... at least `create-react-app` magic.
 
 Check out `ui/package.json` line 5.
 
@@ -90,13 +94,13 @@ Check out `ui/package.json` line 5.
 
 We used `create-react-app` to bootstrap our `ui` directory and so we can uitlize a built in development proxy server.
 
-You see when we run `npm start` behind the scenes an express server is spun up, serving our html, javascript, and css. It also creates a websocket connection witho our front end pushing updates from the code when we save.
+You see when we run `npm start` behind the scenes an express server is spun up, serving our html, javascript, and css. It also creates a websocket connection witho our front end for pushing updates from the code when we save.
 
-While this works great in development this doesn't exist for production environments, we're responsible for serving the files ourselves.
+While this works great in development. However this "proxy server" doesn't exist for a production environment, we're responsible for serving the static files ourselves.
 
 ## Embedding static files into our program
 
-Now for the meat and potatoes of this article. Lets utilize the Go [embed](https://pkg.go.dev/embed) package to serve our filesystem.
+We need away to serve a built React application from our Go API. To do this we can utilize the Go [embed](https://pkg.go.dev/embed) package to serve our file system.
 
 First, lets make our production build. In `ui/` run
 
@@ -118,21 +122,23 @@ We now have a `build` folder with some files in it:
           ├── index.html
           └── static
               ├── css
-              │   ├── main.3530ef6d.css
-              │   └── main.3530ef6d.css.map
+              │   ├── main.xxxxxxxx.css
+              │   └── main.xxxxxxxx.css.map
               └── js
-                  ├── main.54ca0a0d.js
-                  ├── main.54ca0a0d.js.LICENSE.txt
-                  └── main.54ca0a0d.js.map
+                  ├── main.xxxxxxxx.js
+                  ├── main.xxxxxxxx.js.LICENSE.txt
+                  └── main.xxxxxxxx.js.map
 ```
 
-We see our app has boiled down to a couple an `index.html` file and a `static` directory containg our javascript and css.
+By running `npm run build` we've boiled our app down to a couple of static files.
 
-Now, create a new file `ui/ui.go` and copy this code into it.
+From the project directory:
 
 ```sh
 touch ui/ui.go
 ```
+
+And copy and paste this code:
 
 ```go
 package ui
@@ -197,6 +203,12 @@ func (s *staticFileSystem) Exists(prefix string, path string) bool {
 
 ```
 
+Now run:
+
+```sh
+go mod tidy
+```
+
 Lets break this down a bit. Note lines 14 and 15.
 
 ```go
@@ -229,10 +241,33 @@ func (s *staticFileSystem) Exists(prefix string, path string) bool {
 
 This is essentially telling Gin that if the client requests `build/index.html` that that file exists and is served.
 
-So now we can use it Gin middleware, line 21:
+Now we can use it in Gin middleware, line 21:
 
 ```go
 router.Use(static.Serve("/", embeddedBuildFolder))
+```
+
+Lets add this route in our `api/start.go` file, which now looks like:
+
+```go
+package api
+
+import (
+	"github.com/gin-gonic/gin"
+
+	"github.com/observiq/embeddable-react/ui"
+)
+
+func Start() {
+	store := newStore()
+	router := gin.Default()
+
+	addRoutes(router, store)
+	ui.AddRoutes(router)
+
+	router.Run(":4000")
+}
+
 ```
 
 Lets build the binary and see it in action. In the project root directory:
@@ -245,17 +280,15 @@ go build
 ./embeddable-react
 ```
 
-We should see our server spin up as expected.
-
-Now navigate to our _backend_ servers host [localhost:4000](http:/localhost:4000) and voila!
+We should see our server spin up. Now navigate to our _backend_ server host [localhost:4000](http:/localhost:4000) and voila!
 
 ![](images/backend-serve.png)
 
-We have React app running with **no express server** and **no node dependencies**.
+We have React app running with **no express server** and **no node dependencies**. You can hand this off as an RPM or DEB package or even make available to Homebrew.
 
 ## The Refresh Problem
 
-Ok very cool, we got a single page being hosted but lets say we want _another_ page. Customers these days demand websites with multiple pages and we have to give it to them. So lets add an About page and utilize `react-router` to navigate to it.
+Ok very cool, we got a single page being hosted. But lets say we want _another_ page. Customers these days demand websites with multiple pages and we have to be agile and support this ridiculous request. So lets add an About page and utilize React Router to navigate to it.
 
 So in `ui/`
 
@@ -263,7 +296,7 @@ So in `ui/`
 npm install react-router-dom
 ```
 
-Lets add an About page.
+Lets add an About page. From the project directory:
 
 ```sh
 touch ui/src/components/About.jsx
@@ -381,9 +414,7 @@ export default App;
 Now lets rebuild our app and start it again.
 
 ```sh
-cd ui
-npm run build
-../embeddable-react
+cd ui && npm run build && cd .. &&  go build && ./embeddable-react
 ```
 
 ![](images/learn-more.png)
@@ -396,9 +427,9 @@ Great! Only problem is... hit **Refresh**.
 
 ![](images/404.png)
 
-This is unfortunate, but not surprising. Essentially when we it refresh we told the server we're looking for the file at `ui/build/about` - which of course doesn't exist. React Router manages the history state of the broswer to make it appear as if we're navigating to new pages, but the HTML file being used is still `index.html`. How do we get around this?
+This is unfortunate, but not surprising. Essentially when we it refresh we told the server we're looking for the file at `ui/build/about` - which of course doesn't exist. React Router manages the history state of the broswer to make it appear as if we're navigating to new pages, but the HTML of our document is still `index.html`. How do we get around this?
 
-TODO shoutout that awesome stack overflow article.
+**Bonus**: For further explanation on this phenomenon check out Stijn de Witt's answer to [this stack overflow question](https://stackoverflow.com/questions/27928372/react-router-urls-dont-work-when-refreshing-or-writing-manually). We should all be as thorough as Stijn.
 
 ### Create a fallback filesystem
 
@@ -491,13 +522,30 @@ func (f *fallbackFileSystem) Exists(prefix string, path string) bool {
 }
 ```
 
-We've added a couple things here, Note our newstruct `fallbackFileSystem`. We've basically implemented our own methods for
-`Exists` and `Open`, making it so that if any route not found in the first middleware will simply return `index.html`.
+We've added a couple things here, Notably our newest struct `fallbackFileSystem`. We've implemented our own methods for
+`Exists` and `Open`, making it so that it will always return `index.html`.
 
-Ok lets try it again:
+Secondly we've added some more middleware in `AddRoutes`:
 
-```sh
-cd ui && npm run build && cd .. && ./embeddable-react
+```go
+func AddRoutes(router gin.IRouter) {
+	embeddedBuildFolder := newStaticFileSystem()
+	fallbackFileSystem := newFallbackFileSystem(embeddedBuildFolder)
+	router.Use(static.Serve("/", embeddedBuildFolder))
+	router.Use(static.Serve("/", fallbackFileSystem))
+}
 ```
 
-Now after refresh on `/about` we still see the same page.
+The order is important here, the first middleware checks to see if the file exists, making sure our CSS and JavaScript static files are available. It will serve them accordingly when the browswer requests.
+
+Next we say "OK OK we dont have _that_ file, but we **do** have a nice index file." This is the english translation of line 5 above.
+
+Lets rebuild and try again.
+
+```sh
+cd ui && npm run build && cd ..  && go build && ./embeddable-react
+```
+
+Now after refresh on `/about` we see our About page in all its glory. A multi paged, single page React App embedded in a binary. Magic.
+
+## Caveats TODO

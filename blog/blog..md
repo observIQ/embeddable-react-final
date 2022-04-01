@@ -4,7 +4,7 @@ In this article we'll learn how to embed a React single page application (SPA) i
 
 In the meantime its worth discussing the problem that we're here to solve and why this is a great solution for certain use cases.
 
-## The Problem
+## The Use Case
 
 Imagine this: you've built an application and API in Go, maybe in use by a command line client or with REST. One day your project manager emerges from playing Elden Ring long enough to inform you that your customers demand a graphical user interface.
 
@@ -18,17 +18,23 @@ Where the browser is sending requests directly to end points on the same host. T
 
 Maybe this is what you want. You might want to obfuscate your backend from the rest of the internet. In the case though that your API is already exposed there is a very elegant and simple solution, that avoids Node dependencies and running multiple services.
 
-## Prerequisites (TODO)
+## Prerequisites
+
+To follow along with this guide you'll need:
+
+- Go 1.18 installed
+- Node 16 installed
+- Your favorite code editor
 
 ## Getting started
 
-So lets start off with a basic Go API and React App.
+Go ahead and clone the starting point for our app.
 
 ```sh
 git clone https://github.com/observIQ/embeddable-react.git
 ```
 
-Here we have or "To Do" application. A cornerstone of web development tutorials and this article will be no different.
+Here we have a **To Do** application. Unimaginative, yet still a cornerstone of web development tutorials.
 
 Without getting into too much detail we have a REST API which is implemented in `api/` and a React app in `ui/`.
 
@@ -548,4 +554,26 @@ cd ui && npm run build && cd ..  && go build && ./embeddable-react
 
 Now after refresh on `/about` we see our About page in all its glory. A multi paged, single page React App embedded in a binary. Magic.
 
-## Caveats TODO
+## Caveats
+
+While this app serves as a reasonable proof of concept, there are some notable subtleties not covered in depth.
+
+**Authentication** - having an unauthenticated backend API exposed to the wider internet is as dangerous as it sounds.
+
+**Development workflow** - While developing the UI you'll need to run both the backend server (with `go run .`) and the node development server (`npm start`). There are some tools to help you do this in a single shell window, we use [Concurrently](https://www.npmjs.com/package/concurrently).
+
+**The ui/build directory needs to have files for the code to compile** - You might notice that the `//go:embed build` directive is unhappy if there are no files to embed at `ui/build`. This means you'll have to run `npm run build` for the Go program to compile or simply satisfy it with a single file `mkdir ui/build && touch ui/build/index.html`.
+
+## Summary
+
+Its 2022 and when we saw the chance to eliminate a microservice, we took it. By embedding a static React application in our binary we've simplified development and deployment processes.
+
+It's worth noting that this is not putting much of a strain on our backend service, it simply has to serve up some javascript and css files on occasion. The bulk of the work is still in the API routes which in our current project is by design.
+
+We've found this to be a useful and elegant solution to hosting a React App with our Go-written backend.
+
+### Acknowledgments
+
+My colleague Andy Keller came up with and developed the `fallbackFileSytem` workaround.
+
+We took inspiration from [this issue in the gin repo](https://github.com/gin-contrib/static/issues/19) to implement our `staticFileSystem`.

@@ -1,6 +1,6 @@
 # embeddable-react
 
-This Repo consists of the final version of the code implemented and disccused in [this blog](#todo).
+This Repo consists of the final version of the code implemented and disccused in [this blog](#https://observiq.com/blog/embed-react-in-golang/).
 
 ## Bootstrapping
 
